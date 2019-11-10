@@ -62,11 +62,10 @@ fn encode_native<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error>
 }
 
 fn decoder<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let encoder_resource: ResourceArc<EncoderResource> = args[0].decode()?;
-    let num_blocks: usize = args[1].decode()?;
+    let num_blocks: usize = args[0].decode()?;
+    let block_size: usize = args[1].decode()?;
     let stream_id: u64 = args[2].decode()?;
-    let coder = encoder_resource.coder.clone();
-    let decoder = coder.decode(num_blocks, stream_id);
+    let decoder = Decoder::new(num_blocks, block_size, stream_id);
     let res = ResourceArc::new(DecoderResource {
         decoder: decoder,
     });

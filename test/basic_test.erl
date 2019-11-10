@@ -11,7 +11,7 @@ encode_test() ->
 
     {ok, {Coder, Iterator}} = erlang_oc:encode(BlockSize, Data, StreamId),
 
-    {ok, Decoder} = erlang_oc:decoder(Coder, NumBlocks, StreamId),
+    {ok, Decoder} = erlang_oc:decoder(NumBlocks, BlockSize, StreamId),
 
     Decoded = decode(Decoder, Iterator, 0),
 

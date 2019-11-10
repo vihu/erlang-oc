@@ -12,4 +12,4 @@ crate-type = ["dylib"]
 
 [dependencies]
 rustler = ">=0.13.0"
-online_codes = { git = 'https://github.com/vihu/online-codes', branch = 'rg/fix-clippy-warnings' }
+online_codes = { git = 'https://github.com/vihu/online-codes', branch = 'rg/expose-decoder-new' }

@@ -13,8 +13,8 @@
 encode(BlockSize, Data, StreamId) ->
     encode_native(BlockSize, binary:bin_to_list(Data), StreamId).
 
--spec decoder(Coder :: reference(),
-              NumBlocks :: pos_integer(),
+-spec decoder(NumBlocks :: pos_integer(),
+              BlockSize :: pos_integer(),
               StreamId :: non_neg_integer()) -> {ok, reference()} | {error, any()}.
 decoder(_Coder, _NumBlocks, _StreamId) ->
     not_loaded(?LINE).
