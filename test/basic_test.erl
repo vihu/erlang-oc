@@ -10,10 +10,13 @@ encode_test() ->
     StreamId = 0,
 
     {ok, {Coder, Iterator}} = erlang_oc:encode(BlockSize, Data, StreamId),
+    io:format("Coder: ~p, Iterator: ~p", [Coder, Iterator]),
 
     {ok, Decoder} = erlang_oc:decoder(NumBlocks, BlockSize, StreamId),
+    io:format("Decoder: ~p", [Decoder]),
 
     Decoded = decode(Decoder, Iterator, 0),
+    io:format("Decoder: ~p", [Decoded]),
 
     ?assert(is_reference(Coder)),
     ?assert(is_reference(Iterator)),
@@ -24,9 +27,9 @@ decode(Decoder, Iterator, Iterations) ->
     case erlang_oc:decode(Decoder, Iterator) of
         ok ->
             ok;
-        {ok, {NewDecoder, NewIterator}} ->
+        {ok, {{NewDecoder, NewIterator}, nil}} ->
             decode(NewDecoder, NewIterator, Iterations + 1);
-        {ok, Result} ->
+        {ok, {nil, Result}} ->
             io:format("Result: ~p, Iterations: ~p~n", [Result, Iterations]),
             Result
     end.

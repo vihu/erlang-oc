@@ -1,27 +1,29 @@
 extern crate online_codes;
 
+#[macro_use]
 extern crate rustler;
 
-use rustler::{Encoder, Env, Error, Term};
+use rustler::{Env, Error, NifResult, Term};
 use rustler::resource::ResourceArc;
+use rustler::types::Atom;
 use online_codes::encode::{OnlineCoder, BlockIter};
 use online_codes::decode::Decoder;
 
 mod atoms {
-    rustler::rustler_atoms! {
-        atom ok;
-        atom error;
+    atoms! {
+        ok,
+        error
     }
 }
 
-rustler::rustler_export_nifs!(
+init!(
     "erlang_oc",
     [
-        ("encode_native", 3, encode_native),
-        ("decoder", 3, decoder),
-        ("decode", 2, decode)
+        encode_native,
+        decoder,
+        decode
     ],
-    Some(on_load)
+    load=on_load
 );
 
 struct EncoderResource {
@@ -37,68 +39,74 @@ struct DecoderResource {
 }
 
 fn on_load(env: Env, _info: Term) -> bool {
-    rustler::resource_struct_init!(EncoderResource, env);
-    rustler::resource_struct_init!(IterResource, env);
-    rustler::resource_struct_init!(DecoderResource, env);
+    resource!(EncoderResource, env);
+    resource!(IterResource, env);
+    resource!(DecoderResource, env);
     true
 }
 
-fn encode_native<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let block_size: usize = args[0].decode()?;
-    let buf: Vec<u8> = args[1].decode()?;
-    let stream_id: u64 = args[2].decode()?;
+#[rustler::nif]
+fn encode_native<'a>(
+    block_size: usize,
+    buf: Vec<u8>,
+    stream_id: u64) -> NifResult<(Atom, (ResourceArc<EncoderResource>, ResourceArc<IterResource>))> {
     let coder = OnlineCoder::new(block_size);
     let iter = coder.encode(buf, stream_id);
 
     let res1 = ResourceArc::new(EncoderResource {
-        coder: coder,
+        coder
     });
 
     let res2 = ResourceArc::new(IterResource {
-        iter: iter,
+        iter
     });
 
-    Ok((atoms::ok(), (res1, res2)).encode(env))
+    Ok((atoms::ok(), (res1, res2)))
 }
 
-fn decoder<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let num_blocks: usize = args[0].decode()?;
-    let block_size: usize = args[1].decode()?;
-    let stream_id: u64 = args[2].decode()?;
+#[rustler::nif]
+fn decoder<'a>(num_blocks: usize, block_size: usize, stream_id: u64) -> NifResult<(Atom, ResourceArc<DecoderResource>)> {
     let decoder = Decoder::new(num_blocks, block_size, stream_id);
     let res = ResourceArc::new(DecoderResource {
-        decoder: decoder,
+        decoder
     });
-    Ok((atoms::ok(), res).encode(env))
+    Ok((atoms::ok(), res))
 }
 
-fn decode<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let decoder_resource: ResourceArc<DecoderResource> = args[0].decode()?;
-    let iter_resource: ResourceArc<IterResource> = args[1].decode()?;
+#[derive(NifTuple)]
+pub struct DecodeResult {
+    next: Option<(ResourceArc<DecoderResource>, ResourceArc<IterResource>)>,
+    result: Option<Vec<u8>>
+}
 
-    let mut decoder = decoder_resource.decoder.clone();
+#[rustler::nif]
+fn decode<'a>(
+    decoder_resource: ResourceArc<DecoderResource>,
+    iter_resource: ResourceArc<IterResource>) -> NifResult<(Atom, DecodeResult)> {
+    let mut dec = decoder_resource.decoder.clone();
     let mut iter = iter_resource.iter.clone();
 
     match iter.next() {
         None => {
-            Ok((atoms::error()).encode(env))
+            Err(Error::Atom("none"))
         }
         Some((block_id, block)) => {
-            match decoder.decode_block(block_id, &block) {
+            match dec.decode_block(block_id, &block) {
                 None => {
                     let res = ResourceArc::new(DecoderResource {
-                        decoder: decoder,
+                        decoder: dec
                     });
 
                     let res2 = ResourceArc::new(IterResource {
-                        iter: iter,
+                        iter
                     });
                     // {ok, {NewDecoder, NewIterator}}
-                    Ok((atoms::ok(), (res, res2)).encode(env))
+                    let ret = DecodeResult {next: Some((res, res2)), result: None };
+                    Ok((atoms::ok(), ret))
                 }
                 Some(result) => {
                     // {ok, Result}
-                    Ok((atoms::ok(), result).encode(env))
+                    Ok((atoms::ok(), DecodeResult { next: None, result: Some(result) }))
                 }
             }
         }
