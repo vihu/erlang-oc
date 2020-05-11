@@ -11,5 +11,5 @@ name = "native"
 crate-type = ["dylib"]
 
 [dependencies]
-rustler = ">=0.13.0"
+rustler = { git = "https://github.com/rusterlium/rustler.git", branch = "master" }
 online_codes = { git = 'https://github.com/vihu/online-codes', branch = 'rg/expose-decoder-new' }
