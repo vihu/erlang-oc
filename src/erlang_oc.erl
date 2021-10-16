@@ -7,11 +7,19 @@
 -export([load/0]).
 -on_load(load/0).
 
+%% ==================================================================
+%% Encoder
+%% ==================================================================
+
 -spec encode(BlockSize :: pos_integer(),
              Data :: binary(),
              StreamId :: non_neg_integer())-> {ok, reference()} | {error, any()}.
-encode(BlockSize, Data, StreamId) ->
-    encode_native(BlockSize, binary:bin_to_list(Data), StreamId).
+encode(_BlockSize, _Data, _StreamId) ->
+    not_loaded(?LINE).
+
+%% ==================================================================
+%% Decoder
+%% ==================================================================
 
 -spec decoder(NumBlocks :: pos_integer(),
               BlockSize :: pos_integer(),
@@ -24,8 +32,9 @@ decoder(_Coder, _NumBlocks, _StreamId) ->
 decode(_Decoder, _Iterator) ->
     not_loaded(?LINE).
 
-encode_native(_, _, _) ->
-    not_loaded(?LINE).
+%% ==================================================================
+%% NIF
+%% ==================================================================
 
 load() ->
     erlang:load_nif(filename:join(priv(), "libnative"), none).
