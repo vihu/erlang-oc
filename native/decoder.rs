@@ -2,7 +2,7 @@ use crate::atom;
 use crate::iter::{IterArc, IterRes};
 use online_codes::decode::Decoder;
 use rustler::ResourceArc;
-use rustler::{Encoder, Env, Error, Term};
+use rustler::{Encoder, Env, Term};
 
 pub struct DecoderRes {
     pub decoder: Decoder,
@@ -22,25 +22,21 @@ pub fn decoder(num_blocks: usize, block_size: usize, stream_id: u64) -> DecoderA
 }
 
 #[rustler::nif(name = "decode")]
-pub fn decode<'a>(
-    env: Env<'a>,
-    decoder_arc: DecoderArc,
-    iter_arc: IterArc,
-) -> Result<Term<'a>, Error> {
+pub fn decode<'a>(env: Env<'a>, decoder_arc: DecoderArc, iter_arc: IterArc) -> Term<'a> {
     let mut mdecoder = decoder_arc.decoder.clone();
     let mut miter = iter_arc.iter.clone();
 
     match miter.next() {
-        None => Ok((atom::error()).encode(env)),
+        None => (atom::error().encode(env)),
         Some((block_id, block)) => {
             match mdecoder.decode_block(block_id, &block) {
                 None => {
                     let res1 = DecoderArc::new(DecoderRes { decoder: mdecoder });
                     let res2 = IterArc::new(IterRes { iter: miter });
                     // {ok, {NewDecoder, NewIterator}}
-                    Ok((atom::ok(), (res1, res2)).encode(env))
+                    (res1, res2).encode(env)
                 }
-                Some(result) => Ok((atom::ok(), result).encode(env)),
+                Some(result) => result.encode(env),
             }
         }
     }

@@ -13,7 +13,7 @@
 
 -spec encode(BlockSize :: pos_integer(),
              Data :: binary(),
-             StreamId :: non_neg_integer())-> {ok, reference()} | {error, any()}.
+             StreamId :: non_neg_integer())-> {reference(), reference()} | {error, any()}.
 encode(_BlockSize, _Data, _StreamId) ->
     not_loaded(?LINE).
 
@@ -23,12 +23,12 @@ encode(_BlockSize, _Data, _StreamId) ->
 
 -spec decoder(NumBlocks :: pos_integer(),
               BlockSize :: pos_integer(),
-              StreamId :: non_neg_integer()) -> {ok, reference()} | {error, any()}.
+              StreamId :: non_neg_integer()) -> reference() | {error, any()}.
 decoder(_Coder, _NumBlocks, _StreamId) ->
     not_loaded(?LINE).
 
 -spec decode(Decoder :: reference(),
-             Iterator :: reference()) -> error | {ok, list()} | {ok, {reference(), reference()}}.
+             Iterator :: reference()) -> error | list() | {reference(), reference()}.
 decode(_Decoder, _Iterator) ->
     not_loaded(?LINE).
 
