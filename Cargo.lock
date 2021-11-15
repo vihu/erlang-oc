@@ -82,7 +82,7 @@ dependencies = [
 [[package]]
 name = "online_codes"
 version = "0.1.0"
-source = "git+https://github.com/vihu/online-codes?branch=rg/api-update#4e7b4c4d2beedcebdf849b12f8b9b75fa3db5ac6"
+source = "git+https://github.com/vihu/online-codes?branch=master#9ed354eb3c14c2e348666d1bd3d56825214471d3"
 dependencies = [
  "rand",
  "rand_core 0.3.1",
