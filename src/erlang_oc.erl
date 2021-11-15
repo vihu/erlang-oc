@@ -1,7 +1,7 @@
 -module(erlang_oc).
 
 %% API
--export([encode_data/1, next_drop/1, decode_block/2]).
+-export([encode_data/1, next_drop/1, decode_drop/2]).
 
 %% Native lib support
 -export([load/0]).
@@ -13,16 +13,16 @@
 %% Encoder
 %% ==================================================================
 
--spec encode_data(Data :: binary())-> {Encoder :: reference(), Decoder :: reference()}.
+-spec encode_data(Data :: binary())-> {ok, Encoder :: reference(), Decoder :: reference()}.
 encode_data(_Data) ->
     not_loaded(?LINE).
 
--spec next_drop(Encoder :: reference()) -> block() | undefined.
+-spec next_drop(Encoder :: reference()) -> {ok, block()} | undefined.
 next_drop(_Encoder) ->
     not_loaded(?LINE).
 
--spec decode_block(Block :: block(), Decoder :: reference()) -> Data :: binary() | undefined.
-decode_block(_Block, _Decoder) ->
+-spec decode_drop(Block :: block(), Decoder :: reference()) -> {ok, Data :: binary()} | {error, incomplete}.
+decode_drop(_Block, _Decoder) ->
     not_loaded(?LINE).
 
 %% ==================================================================

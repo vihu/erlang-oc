@@ -1,41 +1,91 @@
 use crate::bin::Bin;
-use online_codes::{decode_block, encode, next_block, Block};
-use rustler::{Env, ResourceArc, Term};
+use online_codes::decode::Decoder;
+use online_codes::{decode_block, encode, next_block, Block, Encoder};
+use rustler::{Encoder as Enc, Env, NifResult, ResourceArc, Term};
+// use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{RwLock, RwLockWriteGuard};
 
 mod bin;
 
-pub struct Encoder {
-    pub enc: online_codes::Encoder,
+rustler::atoms! {
+    ok,
+    error,
+    incomplete,
+    undefined,
 }
 
-pub struct Decoder {
-    pub dec: online_codes::decode::Decoder,
+pub struct EncoderResource(RwLock<Encoder>);
+
+impl EncoderResource {
+    // fn read(&self) -> RwLockReadGuard<'_, Encoder> {
+    //     self.0.read().unwrap()
+    // }
+
+    fn write(&self) -> RwLockWriteGuard<'_, Encoder> {
+        self.0.write().unwrap()
+    }
 }
 
-pub type EncoderArc = ResourceArc<Encoder>;
-pub type DecoderArc = ResourceArc<Decoder>;
+impl From<Encoder> for EncoderResource {
+    fn from(other: Encoder) -> Self {
+        EncoderResource(RwLock::new(other))
+    }
+}
+
+pub struct DecoderResource(RwLock<Decoder>);
+
+impl From<Decoder> for DecoderResource {
+    fn from(other: Decoder) -> Self {
+        DecoderResource(RwLock::new(other))
+    }
+}
+
+impl DecoderResource {
+    // fn read(&self) -> RwLockReadGuard<'_, Decoder> {
+    //     self.0.read().unwrap()
+    // }
+
+    fn write(&self) -> RwLockWriteGuard<'_, Decoder> {
+        self.0.write().unwrap()
+    }
+}
 
 #[rustler::nif(name = "encode_data")]
-pub fn encode_data<'a>(data: Bin) -> (EncoderArc, DecoderArc) {
+pub fn encode_data<'a>(env: Env<'a>, data: Bin) -> NifResult<Term<'a>> {
     let (e, d) = encode(data.0);
-    let enc = Encoder { enc: e };
-    let dec = Decoder { dec: d };
-    (EncoderArc::new(enc), DecoderArc::new(dec))
+    Ok((
+        ok(),
+        ResourceArc::new(EncoderResource::from(e)),
+        ResourceArc::new(DecoderResource::from(d)),
+    )
+        .encode(env))
 }
 
 #[rustler::nif(name = "next_drop")]
-pub fn next_drop<'a>(enc_arc: EncoderArc) -> Option<Block> {
-    next_block(&mut enc_arc.enc)
+pub fn next_drop<'a>(env: Env<'a>, enc_arc: ResourceArc<EncoderResource>) -> NifResult<Term<'a>> {
+    let mut enc = enc_arc.write();
+    match next_block(&mut enc) {
+        Some(block) => Ok((ok(), block).encode(env)),
+        None => Ok(undefined().encode(env)),
+    }
 }
 
 #[rustler::nif(name = "decode_drop")]
-pub fn decode_drop<'a>(block: Block, dec_arc: DecoderArc) -> Option<Vec<u8>> {
-    decode_block(block, &mut dec_arc.dec)
+pub fn decode_drop<'a>(
+    env: Env<'a>,
+    block: Block,
+    dec_arc: ResourceArc<DecoderResource>,
+) -> NifResult<Term<'a>> {
+    let mut dec = dec_arc.write();
+    match decode_block(block, &mut dec) {
+        Some(data) => Ok((ok(), Bin(data)).encode(env)),
+        None => Ok((error(), incomplete()).encode(env)),
+    }
 }
 
 fn load(env: Env, _: Term) -> bool {
-    rustler::resource!(Encoder, env);
-    rustler::resource!(Decoder, env);
+    rustler::resource!(EncoderResource, env);
+    rustler::resource!(DecoderResource, env);
     true
 }
 
