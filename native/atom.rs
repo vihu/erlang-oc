@@ -1,4 +1,0 @@
-rustler::atoms! {
-    ok,
-    error,
-}
