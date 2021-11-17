@@ -1,6 +1,6 @@
 use crate::bin::Bin;
 use online_codes::decode::Decoder;
-use online_codes::{decode_block, encode, next_block, Block, Encoder};
+use online_codes::{decode_block, encode, next_block, Encoder};
 use rustler::{Encoder as Enc, Env, NifResult, ResourceArc, Term};
 // use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::sync::{RwLock, RwLockWriteGuard};
@@ -15,6 +15,9 @@ rustler::atoms! {
 }
 
 pub struct EncoderResource(RwLock<Encoder>);
+
+// Prefer the erlang style Bin for drops
+type Drop = (u64, Bin);
 
 impl EncoderResource {
     // fn read(&self) -> RwLockReadGuard<'_, Encoder> {
@@ -65,7 +68,11 @@ pub fn encode_data<'a>(env: Env<'a>, data: Bin) -> NifResult<Term<'a>> {
 pub fn next_drop<'a>(env: Env<'a>, enc_arc: ResourceArc<EncoderResource>) -> NifResult<Term<'a>> {
     let mut enc = enc_arc.write();
     match next_block(&mut enc) {
-        Some(block) => Ok((ok(), block).encode(env)),
+        Some(block) => {
+            let (check_block_id, check_block) = block;
+            Ok((ok(), (check_block_id, Bin(check_block))).encode(env))
+        }
+
         None => Ok(undefined().encode(env)),
     }
 }
@@ -73,11 +80,11 @@ pub fn next_drop<'a>(env: Env<'a>, enc_arc: ResourceArc<EncoderResource>) -> Nif
 #[rustler::nif(name = "decode_drop")]
 pub fn decode_drop<'a>(
     env: Env<'a>,
-    block: Block,
+    drop: Drop,
     dec_arc: ResourceArc<DecoderResource>,
 ) -> NifResult<Term<'a>> {
     let mut dec = dec_arc.write();
-    match decode_block(block, &mut dec) {
+    match decode_block((drop.0, (drop.1).0), &mut dec) {
         Some(data) => Ok((ok(), Bin(data)).encode(env)),
         None => Ok((error(), incomplete()).encode(env)),
     }
