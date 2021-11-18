@@ -4,7 +4,8 @@
 
 identity_test() ->
     Data = crypto:strong_rand_bytes(1024),
-    {ok, Enc, Dec} = erlang_oc:encode_data(Data),
+    {ok, Enc} = erlang_oc:encoder_new(Data, 4, 0),
+    {ok, Dec} = erlang_oc:decoder_new(1024, 4, 0),
     {ok, Decoded} = run(Enc, Dec),
     ?assertEqual(Decoded, Data).
 

@@ -82,7 +82,7 @@ dependencies = [
 [[package]]
 name = "online_codes"
 version = "0.1.0"
-source = "git+https://github.com/vihu/online-codes?branch=master#9ed354eb3c14c2e348666d1bd3d56825214471d3"
+source = "git+https://github.com/vihu/online-codes?branch=rg/more-api-rework#0a1f289ef500d57718a8d8ff42d7104cb1e2a516"
 dependencies = [
  "rand",
  "rand_core 0.3.1",
@@ -252,7 +252,7 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 [[package]]
 name = "rustler"
 version = "0.22.2"
-source = "git+https://github.com/rusterlium/rustler.git?branch=master#1de30df49b13eb7f045501b1df792128cefbcc0a"
+source = "git+https://github.com/rusterlium/rustler.git?branch=master#e6cfd2ab42ae567fac3cdb1d3a4b84de01a3531c"
 dependencies = [
  "lazy_static",
  "rustler_codegen",
@@ -262,7 +262,7 @@ dependencies = [
 [[package]]
 name = "rustler_codegen"
 version = "0.22.2"
-source = "git+https://github.com/rusterlium/rustler.git?branch=master#1de30df49b13eb7f045501b1df792128cefbcc0a"
+source = "git+https://github.com/rusterlium/rustler.git?branch=master#e6cfd2ab42ae567fac3cdb1d3a4b84de01a3531c"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -273,7 +273,7 @@ dependencies = [
 [[package]]
 name = "rustler_sys"
 version = "2.1.1"
-source = "git+https://github.com/rusterlium/rustler.git?branch=master#1de30df49b13eb7f045501b1df792128cefbcc0a"
+source = "git+https://github.com/rusterlium/rustler.git?branch=master#e6cfd2ab42ae567fac3cdb1d3a4b84de01a3531c"
 dependencies = [
  "regex",
  "unreachable",

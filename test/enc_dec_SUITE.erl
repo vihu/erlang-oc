@@ -35,44 +35,56 @@ init_per_testcase(TestCase, Config) ->
             loss_ninety_pct_test -> 0.9;
             _ -> 0.0
         end,
-    Data = crypto:strong_rand_bytes(1024),
-    [{loss, Loss}, {data, Data} | Config].
+    BufLen = 1024,
+    Data = crypto:strong_rand_bytes(BufLen),
+    BlockSize = 4,
+    StreamID = 0,
+    [
+        {loss, Loss},
+        {data, Data},
+        {buf_len, BufLen},
+        {block_size, BlockSize},
+        {stream_id, StreamID}
+        | Config
+    ].
 
 end_per_testcase(_, Config) ->
     Config.
 
 identity_test(Config) ->
     Data = ?config(data, Config),
-    {ok, Enc, Dec} = erlang_oc:encode_data(Data),
+    BufLen = ?config(buf_len, Config),
+    BlockSize = ?config(block_size, Config),
+    StreamID = ?config(stream_id, Config),
+    {ok, Enc} = erlang_oc:encoder_new(Data, BlockSize, StreamID),
+    {ok, Dec} = erlang_oc:decoder_new(BufLen, BlockSize, StreamID),
     {ok, Decoded} = run_no_loss(Enc, Dec),
     true = Decoded == Data,
     ok.
 
 long_running_test(_Config) ->
     %% Byte size should be a multiple of 4?
-    Sizes = lists:seq(4 * 1024, 4 * 100 * 1024, 256),
-    true = run_long_running_test(Sizes, true),
+    BlockSizes = lists:seq(4, 1600),
+    Data = [{BlockSize, lists:seq(16, 1024, BlockSize)} || BlockSize <- BlockSizes],
+    true = lists:all(
+        fun({BlockSize, Sizes}) ->
+            run_long_running_test(BlockSize, Sizes, true)
+        end,
+        Data
+    ),
     ok.
 
 loss_ten_pct_test(Config) ->
-    Loss = ?config(loss, Config),
-    Data = ?config(data, Config),
-    run_loss_test(Loss, Data).
+    run_loss_test(Config).
 
 loss_thirty_pct_test(Config) ->
-    Loss = ?config(loss, Config),
-    Data = ?config(data, Config),
-    run_loss_test(Loss, Data).
+    run_loss_test(Config).
 
 loss_fifty_pct_test(Config) ->
-    Loss = ?config(loss, Config),
-    Data = ?config(data, Config),
-    run_loss_test(Loss, Data).
+    run_loss_test(Config).
 
 loss_ninety_pct_test(Config) ->
-    Loss = ?config(loss, Config),
-    Data = ?config(data, Config),
-    run_loss_test(Loss, Data).
+    run_loss_test(Config).
 
 %% Helper functions
 
@@ -104,21 +116,29 @@ run_with_loss(Enc, Dec, Loss) ->
             run_with_loss(Enc, Dec, Loss)
     end.
 
-run_loss_test(Loss, Data) ->
-    {ok, Enc, Dec} = erlang_oc:encode_data(Data),
+run_loss_test(Config) ->
+    Data = ?config(data, Config),
+    BufLen = ?config(buf_len, Config),
+    BlockSize = ?config(block_size, Config),
+    StreamID = ?config(stream_id, Config),
+    Loss = ?config(loss, Config),
+    {ok, Enc} = erlang_oc:encoder_new(Data, BlockSize, StreamID),
+    {ok, Dec} = erlang_oc:decoder_new(BufLen, BlockSize, StreamID),
     {ok, Decoded} = run_with_loss(Enc, Dec, Loss),
     true = Decoded == Data,
     ok.
 
-run_long_running_test([], true) ->
+run_long_running_test(_BlockSize, [], true) ->
     true;
-run_long_running_test([Size | Tail], true) ->
+run_long_running_test(BlockSize, [Size | Tail], true) ->
     Data = crypto:strong_rand_bytes(Size),
-    {ok, Enc, Dec} = erlang_oc:encode_data(Data),
+    {ok, Enc} = erlang_oc:encoder_new(Data, BlockSize, 0),
+    {ok, Dec} = erlang_oc:decoder_new(Size, BlockSize, 0),
     {ok, Decoded} = run_no_loss(Enc, Dec),
     case Decoded == Data of
         true ->
-            ct:pal("Size: ~p Match!", [Size]),
-            run_long_running_test(Tail, true);
-        false -> false
+            ct:pal("BlockSize: ~p BufSize: ~p", [BlockSize, Size]),
+            run_long_running_test(BlockSize, Tail, true);
+        false ->
+            false
     end.

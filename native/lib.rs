@@ -1,6 +1,6 @@
 use crate::bin::Bin;
 use online_codes::decode::Decoder;
-use online_codes::{decode_block, encode, next_block, Encoder};
+use online_codes::{decode_block, new_decoder, new_encoder, next_block, Encoder};
 use rustler::{Encoder as Enc, Env, NifResult, ResourceArc, Term};
 // use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::sync::{RwLock, RwLockWriteGuard};
@@ -53,15 +53,26 @@ impl DecoderResource {
     }
 }
 
-#[rustler::nif(name = "encode_data")]
-pub fn encode_data<'a>(env: Env<'a>, data: Bin) -> NifResult<Term<'a>> {
-    let (e, d) = encode(data.0);
-    Ok((
-        ok(),
-        ResourceArc::new(EncoderResource::from(e)),
-        ResourceArc::new(DecoderResource::from(d)),
-    )
-        .encode(env))
+#[rustler::nif(name = "encoder_new")]
+pub fn encoder_new<'a>(
+    env: Env<'a>,
+    data: Bin,
+    block_size: usize,
+    stream_id: u64,
+) -> NifResult<Term<'a>> {
+    let e = new_encoder(data.0, block_size, stream_id);
+    Ok((ok(), ResourceArc::new(EncoderResource::from(e))).encode(env))
+}
+
+#[rustler::nif(name = "decoder_new")]
+pub fn decoder_new<'a>(
+    env: Env<'a>,
+    buf_len: usize,
+    block_size: usize,
+    stream_id: u64,
+) -> NifResult<Term<'a>> {
+    let d = new_decoder(buf_len, block_size, stream_id);
+    Ok((ok(), ResourceArc::new(DecoderResource::from(d))).encode(env))
 }
 
 #[rustler::nif(name = "next_drop")]
@@ -98,6 +109,6 @@ fn load(env: Env, _: Term) -> bool {
 
 rustler::init!(
     "erlang_oc",
-    [encode_data, next_drop, decode_drop],
+    [encoder_new, decoder_new, next_drop, decode_drop],
     load = load
 );
