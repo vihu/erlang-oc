@@ -5,26 +5,24 @@
 encode_test() ->
     BufLen = 1024,
     BlockSize = BufLen div 4,
-    NumBlocks = BufLen div BlockSize,
     Data = crypto:strong_rand_bytes(BufLen),
     StreamId = 0,
-
-    {_Coder, Iterator} = erlang_oc:encode(BlockSize, Data, StreamId),
-
-    Decoder = erlang_oc:decoder(NumBlocks, BlockSize, StreamId),
-
-    Decoded = decode(Decoder, Iterator, 0),
-
-    ?assertEqual(binary:bin_to_list(Data), Decoded).
+    {ok, Encoder} = erlang_oc:encoder(Data, BlockSize, StreamId),
+    {ok, Decoder} = erlang_oc:decoder(BufLen, BlockSize, StreamId),
+    {Decoded, Iterations} = decode(Encoder, Decoder, 0),
+    io:format("Iterations: ~p~n", [Iterations]),
+    ?assertEqual(Decoded, Data).
 
 %% convenience driver function
-decode(Decoder, Iterator, Iterations) ->
-    case erlang_oc:decode(Decoder, Iterator) of
-        ok ->
-            ok;
-        {NewDecoder, NewIterator} ->
-            decode(NewDecoder, NewIterator, Iterations + 1);
-        Result ->
-            io:format("Result: ~p, Iterations: ~p~n", [Result, Iterations]),
-            Result
+decode(Encoder, Decoder, Iterations) ->
+    case erlang_oc:next_drop(Encoder) of
+        undefined ->
+            decode(Encoder, Decoder, Iterations + 1);
+        {ok, Drop} ->
+            case erlang_oc:decode_drop(Drop, Decoder) of
+                {error, incomplete} ->
+                    decode(Encoder, Decoder, Iterations + 1);
+                {ok, Thing} ->
+                    {Thing, Iterations}
+            end
     end.

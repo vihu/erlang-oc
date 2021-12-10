@@ -1,28 +1,32 @@
 -module(erlang_oc).
 
 %% API
--export([encode_data/1, next_drop/1, decode_block/2]).
+-export([encoder/3, decoder/3, next_drop/1, decode_drop/2]).
 
 %% Native lib support
 -export([load/0]).
 -on_load(load/0).
 
--type block() :: {non_neg_integer(), binary()}.
+-type drop() :: {non_neg_integer(), binary()}.
 
 %% ==================================================================
 %% Encoder
 %% ==================================================================
 
--spec encode_data(Data :: binary())-> {Encoder :: reference(), Decoder :: reference()}.
-encode_data(_Data) ->
+-spec encoder(Data :: binary(), BlockSize :: pos_integer(), StreamID :: non_neg_integer())-> Encoder :: reference().
+encoder(_Data, _BlockSize, _StreamID) ->
     not_loaded(?LINE).
 
--spec next_drop(Encoder :: reference()) -> block() | undefined.
+-spec decoder(BufLen :: non_neg_integer(), BlockSize :: pos_integer(), StreamID :: non_neg_integer())-> Decoder :: reference().
+decoder(_BufLen, _BlockSize, _StreamID) ->
+    not_loaded(?LINE).
+
+-spec next_drop(Encoder :: reference()) -> drop() | undefined.
 next_drop(_Encoder) ->
     not_loaded(?LINE).
 
--spec decode_block(Block :: block(), Decoder :: reference()) -> Data :: binary() | undefined.
-decode_block(_Block, _Decoder) ->
+-spec decode_drop(Drop :: drop(), Decoder :: reference()) -> Data :: binary() | undefined.
+decode_drop(_Drop, _Decoder) ->
     not_loaded(?LINE).
 
 %% ==================================================================
