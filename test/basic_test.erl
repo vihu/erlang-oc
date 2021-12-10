@@ -2,19 +2,27 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-identity_test() ->
-    Data = crypto:strong_rand_bytes(1024),
-    {ok, Enc, Dec} = erlang_oc:encode_data(Data),
-    {ok, Decoded} = run(Enc, Dec),
+encode_test() ->
+    BufLen = 1024,
+    BlockSize = BufLen div 4,
+    Data = crypto:strong_rand_bytes(BufLen),
+    StreamId = 0,
+    {ok, Encoder} = erlang_oc:encoder(Data, BlockSize, StreamId),
+    {ok, Decoder} = erlang_oc:decoder(BufLen, BlockSize, StreamId),
+    {Decoded, Iterations} = decode(Encoder, Decoder, 0),
+    io:format("Iterations: ~p~n", [Iterations]),
     ?assertEqual(Decoded, Data).
 
-run(Enc, Dec) ->
-    case erlang_oc:next_drop(Enc) of
-        {ok, Block} ->
-            case erlang_oc:decode_drop(Block, Dec) of
-                {ok, Data} -> {ok, Data};
-                {error, incomplete} -> run(Enc, Dec)
-            end;
-        _ ->
-            run(Enc, Dec)
+%% convenience driver function
+decode(Encoder, Decoder, Iterations) ->
+    case erlang_oc:next_drop(Encoder) of
+        undefined ->
+            decode(Encoder, Decoder, Iterations + 1);
+        {ok, Drop} ->
+            case erlang_oc:decode_drop(Drop, Decoder) of
+                {error, incomplete} ->
+                    decode(Encoder, Decoder, Iterations + 1);
+                {ok, Thing} ->
+                    {Thing, Iterations}
+            end
     end.
