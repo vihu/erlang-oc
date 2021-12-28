@@ -8,16 +8,15 @@ encode_test() ->
     Data = crypto:strong_rand_bytes(BufLen),
     StreamId = 0,
     %% LDPC encode data
-    %% XXX: maybe try some other encode strategy?
     {ok, EncData} = erldpc:encode_tm1280(Data),
     {ok, Encoder} = erlang_oc:encoder(EncData, BlockSize, StreamId),
-    {ok, Decoder} = erlang_oc:decoder(BufLen, BlockSize, StreamId),
+    {ok, Decoder} = erlang_oc:decoder(byte_size(EncData), BlockSize, StreamId),
     {Decoded, Iterations} = decode(Encoder, Decoder, 0),
     io:format("Iterations: ~p~n", [Iterations]),
+    ?assertEqual(Decoded, EncData),
     %% LDPC decode data
-    %% XXX: nif panic!
-    {ok, DecData} = erldpc:decode_tm1280(Decoded),
-    ?assertEqual(DecData, Data).
+    {ok, DecData} = erldpc:decode_tm1280(flip(Decoded, 1)),
+    ?assertEqual(binary:part(DecData, 0, BufLen), Data).
 
 %% convenience driver function
 decode(Encoder, Decoder, Iterations) ->
@@ -32,3 +31,11 @@ decode(Encoder, Decoder, Iterations) ->
                     {Thing, Iterations}
             end
     end.
+
+flip(Data, Pct) ->
+    << begin
+           case rand:uniform(100) < Pct of
+               true -> <<(B bxor 1):1/integer>>;
+               false -> <<B:1/integer>>
+           end
+       end || <<B:1/integer>> <= Data >>.
