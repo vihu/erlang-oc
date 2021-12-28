@@ -3,15 +3,21 @@
 -include_lib("eunit/include/eunit.hrl").
 
 encode_test() ->
-    BufLen = 1024,
+    BufLen = 128,
     BlockSize = BufLen div 4,
     Data = crypto:strong_rand_bytes(BufLen),
     StreamId = 0,
-    {ok, Encoder} = erlang_oc:encoder(Data, BlockSize, StreamId),
+    %% LDPC encode data
+    %% XXX: maybe try some other encode strategy?
+    {ok, EncData} = erldpc:encode_tm1280(Data),
+    {ok, Encoder} = erlang_oc:encoder(EncData, BlockSize, StreamId),
     {ok, Decoder} = erlang_oc:decoder(BufLen, BlockSize, StreamId),
     {Decoded, Iterations} = decode(Encoder, Decoder, 0),
     io:format("Iterations: ~p~n", [Iterations]),
-    ?assertEqual(Decoded, Data).
+    %% LDPC decode data
+    %% XXX: nif panic!
+    {ok, DecData} = erldpc:decode_tm1280(Decoded),
+    ?assertEqual(DecData, Data).
 
 %% convenience driver function
 decode(Encoder, Decoder, Iterations) ->
