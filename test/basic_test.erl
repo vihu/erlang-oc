@@ -4,7 +4,7 @@
 
 encode_test() ->
     BufLen = 32,
-    BlockSize = BufLen div 8,
+    BlockSize = BufLen div 4,
     Data = crypto:strong_rand_bytes(BufLen),
     StreamId = 0,
     %% LDPC encode data
@@ -23,9 +23,8 @@ decode(Encoder, Decoder, Iterations) ->
     case erlang_oc:next_drop(Encoder) of
         undefined ->
             decode(Encoder, Decoder, Iterations + 1);
-        {ok, {DropNum, DropBin}} ->
-            FDrop = {DropNum, flip(DropBin, 1)},
-            case erlang_oc:decode_drop(FDrop, Decoder) of
+        {ok, Drop} ->
+            case erlang_oc:decode_drop(Drop, Decoder) of
                 {error, incomplete} ->
                     decode(Encoder, Decoder, Iterations + 1);
                 {ok, Thing} ->
@@ -33,10 +32,15 @@ decode(Encoder, Decoder, Iterations) ->
             end
     end.
 
-flip(Data, Pct) ->
-    << begin
-           case rand:uniform(100) < Pct of
-               true -> <<(B bxor 1):1/integer>>;
-               false -> <<B:1/integer>>
-           end
-       end || <<B:1/integer>> <= Data >>.
+flip(Data, NumBits) ->
+    List = lists:seq(1, byte_size(Data) - 1),
+    ToReplace = lists:sublist(shuffle(List), NumBits),
+
+    lists:foldl(
+      fun(Index, Acc) ->
+              binary:replace(Acc, <<(binary:at(Acc, Index))>>, <<(binary:at(Acc, Index) bxor 1)>>)
+      end, Data, ToReplace).
+
+-spec shuffle([A]) -> [A].
+shuffle(Xs) ->
+    [X || {_, X} <- lists:sort([{rand:uniform(), X} || X <- Xs])].
