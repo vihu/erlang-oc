@@ -12,7 +12,7 @@ encode_test() ->
     {ok, Encoder} = erlang_oc:encoder(EncData, BlockSize, StreamId),
     {ok, Decoder} = erlang_oc:decoder(byte_size(EncData), BlockSize, StreamId),
     DecodeFun = fun(ResData) ->
-                        case erldpc:decode_tm1280(ResData) of
+                        case erldpc:decode_ms_tm1280(ResData) of
                             {ok, RR} ->
                                 case binary:part(RR, 0, BufLen) == Data of
                                     true ->
