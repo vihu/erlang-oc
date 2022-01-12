@@ -37,7 +37,7 @@ all() ->
 
 init_per_group(data_32, Config) ->
     EncFun = fun(Data) -> erldpc:encode_tc512(Data) end,
-    DecFun = fun(Data) -> erldpc:decode_tc512(Data) end,
+    DecFun = fun(Data) -> erldpc:decode_ms_tc512(Data) end,
     [{enc_fun, EncFun}, {dec_fun, DecFun} | Config].
 
 end_per_group(_, _Config) ->

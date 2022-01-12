@@ -1,7 +1,7 @@
 -module(erlang_oc).
 
 %% API
--export([encoder/3, decoder/3, next_drop/1, decode_drop/2]).
+-export([encoder/3, encoder_with_params/5, decoder/3, next_drop/1, decode_drop/2]).
 
 %% Native lib support
 -export([load/0]).
@@ -15,6 +15,15 @@
 
 -spec encoder(Data :: binary(), BlockSize :: pos_integer(), StreamID :: non_neg_integer())-> Encoder :: reference().
 encoder(_Data, _BlockSize, _StreamID) ->
+    not_loaded(?LINE).
+
+-spec encoder_with_params(
+        Data :: binary(),
+        BlockSize :: pos_integer(),
+        Epsilon :: float(),
+        Q :: pos_integer(),
+        StreamID :: non_neg_integer())-> Encoder :: reference().
+encoder_with_params(_Data, _BlockSize, _Epsilon, _Q, _StreamID) ->
     not_loaded(?LINE).
 
 -spec decoder(BufLen :: non_neg_integer(), BlockSize :: pos_integer(), StreamID :: non_neg_integer())-> Decoder :: reference().

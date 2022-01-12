@@ -1,5 +1,7 @@
 use crate::bin::Bin;
-use online_codes::{decode_block, new_decoder, new_encoder, next_block, types::StreamId};
+use online_codes::{
+    decode_block, new_decoder, new_encoder, new_encoder_with_params, next_block, types::StreamId,
+};
 use rustler::{Encoder, Env, NifResult, ResourceArc, Term};
 use std::sync::{RwLock, RwLockWriteGuard};
 
@@ -60,6 +62,19 @@ pub fn encoder<'a>(
     Ok((ok(), ResourceArc::new(EncoderRes::from(e))).encode(env))
 }
 
+#[rustler::nif(name = "encoder_with_params")]
+pub fn encoder_with_params<'a>(
+    env: Env<'a>,
+    data: Bin,
+    block_size: usize,
+    epsilon: f64,
+    q: usize,
+    stream_id: StreamId,
+) -> NifResult<Term<'a>> {
+    let e = new_encoder_with_params(data.0, block_size, epsilon, q, stream_id);
+    Ok((ok(), ResourceArc::new(EncoderRes::from(e))).encode(env))
+}
+
 #[rustler::nif(name = "decoder")]
 pub fn decoder<'a>(
     env: Env<'a>,
@@ -105,6 +120,12 @@ fn load(env: Env, _: Term) -> bool {
 
 rustler::init!(
     "erlang_oc",
-    [encoder, decoder, next_drop, decode_drop],
+    [
+        encoder,
+        encoder_with_params,
+        decoder,
+        next_drop,
+        decode_drop
+    ],
     load = load
 );
