@@ -1,6 +1,7 @@
 use crate::bin::Bin;
 use online_codes::{
-    decode_block, new_decoder, new_encoder, new_encoder_with_params, next_block, types::StreamId,
+    decode_block, new_decoder, new_decoder_with_params, new_encoder, new_encoder_with_params,
+    next_block, types::StreamId,
 };
 use rustler::{Encoder, Env, NifResult, ResourceArc, Term};
 use std::sync::{RwLock, RwLockWriteGuard};
@@ -86,6 +87,19 @@ pub fn decoder<'a>(
     Ok((ok(), ResourceArc::new(DecoderRes::from(d))).encode(env))
 }
 
+#[rustler::nif(name = "decoder_with_params")]
+pub fn decoder_with_params<'a>(
+    env: Env<'a>,
+    buf_len: usize,
+    block_size: usize,
+    epsilon: f64,
+    q: usize,
+    stream_id: StreamId,
+) -> NifResult<Term<'a>> {
+    let d = new_decoder_with_params(buf_len, block_size, epsilon, q, stream_id);
+    Ok((ok(), ResourceArc::new(DecoderRes::from(d))).encode(env))
+}
+
 #[rustler::nif(name = "next_drop")]
 pub fn next_drop<'a>(env: Env<'a>, enc_arc: ResourceArc<EncoderRes>) -> NifResult<Term<'a>> {
     let mut enc = enc_arc.write();
@@ -124,6 +138,7 @@ rustler::init!(
         encoder,
         encoder_with_params,
         decoder,
+        decoder_with_params,
         next_drop,
         decode_drop
     ],

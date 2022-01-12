@@ -7,10 +7,12 @@ encode_test() ->
     BlockSize = BufLen div 16,
     Data = crypto:strong_rand_bytes(BufLen),
     StreamId = 0,
+    Epsilon = 0.5,
+    Q = 3,
     %% LDPC encode data
     {ok, EncData} = erldpc:encode_tm1280(Data),
-    {ok, Encoder} = erlang_oc:encoder(EncData, BlockSize, StreamId),
-    {ok, Decoder} = erlang_oc:decoder(byte_size(EncData), BlockSize, StreamId),
+    {ok, Encoder} = erlang_oc:encoder_with_params(EncData, BlockSize, Epsilon, Q, StreamId),
+    {ok, Decoder} = erlang_oc:decoder_with_params(byte_size(EncData), BlockSize, Epsilon, Q, StreamId),
     DecodeFun = fun(ResData) ->
                         case erldpc:decode_ms_tm1280(ResData) of
                             {ok, RR} ->
