@@ -28,11 +28,16 @@ encode_test() ->
     {Decoded, Iterations} = decode(Encoder, Decoder, 0, 0, 0, DecodeFun),
     io:format("Iterations: ~p~n", [Iterations]),
     io:format(user, "uncorrected bits ~p~n", [bit_diff(Decoded, Data)]),
-    HeaderSize = 6,
-    io:format(user, "uncorrected header bits ~p~n", [bit_diff(binary:part(Decoded, 0, HeaderSize), binary:part(Data, 0, HeaderSize))]),
+    HeaderSize = 8,
+    Header = binary:part(Data, 0, HeaderSize),
+    io:format(user, "uncorrected header bits ~p~n", [bit_diff(binary:part(Decoded, 0, HeaderSize), Header)]),
+    %% match the header out of a bunch of candidates
+    HeaderCandidates = [Header | [ crypto:strong_rand_bytes(HeaderSize) || _ <- lists:seq(1, 1000) ]],
+    {_, BestMatch} = hd(lists:keysort(1, [ {bit_diff(binary:part(Decoded, 0, HeaderSize), C), C} || C <- HeaderCandidates ])),
     %?assertEqual(Decoded, EncData),
     %% LDPC decode data
-    ?assertEqual(Decoded, Data).
+    ?assertEqual(Header, BestMatch),
+    io:format(user, "Resolved header ok~n", []).
 
 amplifiy(0, Factor) ->
     1 * Factor;
