@@ -1,4 +1,4 @@
 [{<<"erldpc">>,
   {git,"https://github.com/helium/erldpc.git",
-       {ref,"afd30badb94eb61323cc3adc274baf094850e121"}},
+       {ref,"a5fb80deb6f87af4aaebdb54b8260155b3528f90"}},
   0}].
