@@ -1,6 +1,6 @@
 [{<<"erlcode">>,
   {git,"https://github.com/vihu/erlcode.git",
-       {ref,"9c1336880a6b58b807015864fc2836d064b83b26"}},
+       {ref,"4d3210ac2197666fda26c0e2dbcb7882bd6cadcf"}},
   0},
  {<<"erldpc">>,
   {git,"https://github.com/helium/erldpc.git",

@@ -165,7 +165,7 @@ from_golay(Bytes) ->
                         case erlcode:golay_extended_decode(Chunk) of
                             {ok, {Dec, Corr}} ->
                                 {[<<Dec:12/integer>> | Acc], Corrections + Corr};
-                            {error, unrecoverable} ->
+                            {error, {unrecoverable, _}} ->
                                 {[{unrecoverable, Chunk} | Acc], Corrections}
                         end
                 end, {[], 0}, [ B || <<B:24/integer-unsigned-big>> <= Bytes ]).
