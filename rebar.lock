@@ -1,4 +1,8 @@
-[{<<"erldpc">>,
+[{<<"erlcode">>,
+  {git,"https://github.com/vihu/erlcode.git",
+       {ref,"9c1336880a6b58b807015864fc2836d064b83b26"}},
+  0},
+ {<<"erldpc">>,
   {git,"https://github.com/helium/erldpc.git",
        {ref,"a5fb80deb6f87af4aaebdb54b8260155b3528f90"}},
   0}].
