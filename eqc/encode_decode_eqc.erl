@@ -6,40 +6,43 @@
 
 prop_check_test() ->
     ?FORALL({Bin, Epsilon, Q}, {gen_bytes8(), gen_epsilon(), gen_q()},
-            begin
-                BlockSize = 4,
-                Data = Bin,
-                Buf = <<
-                        begin
-                            {ok, Enc} = erlcode:bch_encode(B),
-                            <<Enc:64/integer-unsigned-big>>
-                        end ||  <<B:16/integer-unsigned-big>> <= Data >>,
+            ?SOMETIMES(100,
+                begin
+                    BlockSize = 4,
+                    Data = Bin,
+                    Buf = <<
+                            begin
+                                {ok, Enc} = erlcode:bch_encode(B),
+                                <<Enc:64/integer-unsigned-big>>
+                            end ||  <<B:16/integer-unsigned-big>> <= Data >>,
 
-                StreamId = 0,
-                %% LDPC encode data
-                {ok, EncData} = erldpc:encode_tc512(Buf),
-                {ok, Encoder} = erlang_oc:encoder_with_params(EncData, BlockSize, Epsilon, Q, StreamId),
-                {ok, Decoder} = erlang_oc:decoder_with_params(byte_size(EncData), BlockSize, Epsilon, Q, StreamId),
-                DecodeFun = fun(ResData) ->
-                                    decode_recursive(ResData)
-                            end,
+                    StreamId = 0,
+                    %% LDPC encode data
+                    {ok, EncData} = erldpc:encode_tc512(Buf),
+                    {ok, Encoder} = erlang_oc:encoder_with_params(EncData, BlockSize, Epsilon, Q, StreamId),
+                    {ok, Decoder} = erlang_oc:decoder_with_params(byte_size(EncData), BlockSize, Epsilon, Q, StreamId),
+                    DecodeFun = fun(ResData) ->
+                                        decode_recursive(ResData)
+                                end,
 
-                {Decoded, _Iterations} = decode(Encoder, Decoder, 0, 0, 0, DecodeFun),
-                HeaderSize = 8,
-                Header = binary:part(Data, 0, HeaderSize),
-                %% match the header out of a bunch of candidates
-                HeaderCandidates = [Header | [ crypto:strong_rand_bytes(HeaderSize) || _ <- lists:seq(1, 1000) ]],
-                {_, BestMatch} = hd(lists:keysort(1, [ {bit_diff(binary:part(Decoded, 0, HeaderSize), C), C} || C <- HeaderCandidates ])),
-                %% LDPC decode data
-                Check = Header == BestMatch,
+                    {Decoded, _Iterations} = decode(Encoder, Decoder, 0, 0, 0, DecodeFun),
+                    HeaderSize = 8,
+                    Header = binary:part(Data, 0, HeaderSize),
+                    %% match the header out of a bunch of candidates
+                    HeaderCandidates = [Header | [ crypto:strong_rand_bytes(HeaderSize) || _ <- lists:seq(1, 1000) ]],
+                    {_, BestMatch} = hd(lists:keysort(1, [ {bit_diff(binary:part(Decoded, 0, HeaderSize), C), C}
+                                                           || C <- HeaderCandidates ])),
+                    %% LDPC decode data
+                    Check = Header == BestMatch,
 
-                ?WHENFAIL(begin
-                              io:format("Bin: ~p~n", [Bin]),
-                              io:format("Header: ~p~n", [Header]),
-                              io:format("BestMatch: ~p~n", [BestMatch])
-                          end,
-                          conjunction([{verify_enc_dec, Check}]))
-            end).
+                    ?WHENFAIL(begin
+                                  io:format("Bin: ~p~n", [Bin]),
+                                  io:format("Header: ~p~n", [Header]),
+                                  io:format("BestMatch: ~p~n", [BestMatch])
+                              end,
+                              conjunction([{verify_enc_dec, Check}]))
+                end)
+           ).
 
 gen_bytes8() ->
     binary(8).
@@ -49,6 +52,11 @@ gen_epsilon() ->
 
 gen_q() ->
     elements([3, 4, 5, 6, 7, 8, 9, 10]).
+
+
+%% ==================================================================
+%% Internal Functions
+%% ==================================================================
 
 amplify(0, Factor) ->
     1 * Factor;
@@ -92,15 +100,15 @@ flip(Data, 0) ->
     Data;
 flip(Data, NumBits) ->
     List = lists:seq(1, byte_size(Data) - 1),
-    ToReplace = lists:sublist(shuffle(List), NumBits),
+    ToReplace = lists:sublist(local_shuffle(List), NumBits),
 
     lists:foldl(
       fun(Index, Acc) ->
               binary:replace(Acc, <<(binary:at(Acc, Index))>>, <<(binary:at(Acc, Index) bxor rand:uniform(2) - 1)>>)
       end, Data, ToReplace).
 
--spec shuffle([A]) -> [A].
-shuffle(Xs) ->
+-spec local_shuffle([A]) -> [A].
+local_shuffle(Xs) ->
     [X || {_, X} <- lists:sort([{rand:uniform(), X} || X <- Xs])].
 
 
