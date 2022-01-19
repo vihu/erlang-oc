@@ -5,11 +5,10 @@
 -export([prop_check_test/0]).
 
 prop_check_test() ->
-    ?FORALL({Bin, Epsilon, Q}, {gen_bytes8(), gen_epsilon(), gen_q()},
-            ?SOMETIMES(100,
+    ?FORALL({Data, Epsilon, Q}, {gen_bytes8(), gen_epsilon(), gen_q()},
+            ?SOMETIMES(25,
                 begin
                     BlockSize = 4,
-                    Data = Bin,
                     Buf = <<
                             begin
                                 {ok, Enc} = erlcode:bch_encode(B),
@@ -25,8 +24,8 @@ prop_check_test() ->
                                         decode_recursive(ResData)
                                 end,
 
-                    {Decoded, _Iterations} = decode(Encoder, Decoder, 0, 0, 0, DecodeFun),
-                    HeaderSize = 8,
+                    {Decoded, Iterations} = decode(Encoder, Decoder, 0, 0, 0, DecodeFun),
+                    HeaderSize = byte_size(Data),
                     Header = binary:part(Data, 0, HeaderSize),
                     %% match the header out of a bunch of candidates
                     HeaderCandidates = [Header | [ crypto:strong_rand_bytes(HeaderSize) || _ <- lists:seq(1, 1000) ]],
@@ -35,8 +34,10 @@ prop_check_test() ->
                     %% LDPC decode data
                     Check = Header == BestMatch,
 
+                    write_to_file(Check, Q, Epsilon, Iterations),
+
                     ?WHENFAIL(begin
-                                  io:format("Bin: ~p~n", [Bin]),
+                                  io:format("Data: ~p~n", [Data]),
                                   io:format("Header: ~p~n", [Header]),
                                   io:format("BestMatch: ~p~n", [BestMatch])
                               end,
@@ -179,3 +180,16 @@ from_bch(Bytes) ->
                         end
                 end, {[], 0}, [ B || <<B:64/integer-unsigned-big>> <= Bytes ]).
 
+write_to_file(Check, Q, Epsilon, Iterations) ->
+    Fname = "/tmp/eqc.json",
+    {ok, FileHandle} = file:open(Fname, [write, append]),
+    ToAppend = #{<<"check">> => Check,
+                 <<"q">> => Q,
+                 <<"epsilon">> => Epsilon,
+                 <<"iterations">> => Iterations
+                },
+    ok = file:write(FileHandle, jsx:encode(ToAppend)),
+    ok = file:write(FileHandle, ","),
+    ok = file:write(FileHandle, io_lib:nl()),
+    ok = file:close(FileHandle),
+    ok.
