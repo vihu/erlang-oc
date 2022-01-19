@@ -13,5 +13,5 @@ crate-type = ["dylib"]
 path = "native/lib.rs"
 
 [dependencies]
-rustler = { git = "https://github.com/rusterlium/rustler.git", branch = "master" }
-online_codes = { git = 'https://github.com/vihu/online-codes', branch = "master" }
+rustler = { git = "https://github.com/vihu/rustler.git", branch = "rg/unload-upgrade" }
+online_codes = { git = 'https://github.com/vihu/online-codes', branch = "rg/perpetual" }

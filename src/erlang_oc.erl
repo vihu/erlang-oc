@@ -1,7 +1,13 @@
 -module(erlang_oc).
 
 %% API
--export([encoder/3, decoder/3, next_drop/1, decode_drop/2]).
+-export(
+   [encoder/3,
+    encoder_with_params/5,
+    decoder/3,
+    decoder_with_params/5,
+    next_drop/1,
+    decode_drop/2]).
 
 %% Native lib support
 -export([load/0]).
@@ -13,19 +19,42 @@
 %% Encoder
 %% ==================================================================
 
--spec encoder(Data :: binary(), BlockSize :: pos_integer(), StreamID :: non_neg_integer())-> Encoder :: reference().
+-spec encoder(Data :: binary(),
+              BlockSize :: pos_integer(),
+              StreamID :: non_neg_integer()) -> {ok, Encoder :: reference()}.
 encoder(_Data, _BlockSize, _StreamID) ->
     not_loaded(?LINE).
 
--spec decoder(BufLen :: non_neg_integer(), BlockSize :: pos_integer(), StreamID :: non_neg_integer())-> Decoder :: reference().
+-spec encoder_with_params(
+        Data :: binary(),
+        BlockSize :: pos_integer(),
+        Epsilon :: float(),
+        Q :: pos_integer(),
+        StreamID :: non_neg_integer()) -> {ok, Encoder :: reference()}.
+encoder_with_params(_Data, _BlockSize, _Epsilon, _Q, _StreamID) ->
+    not_loaded(?LINE).
+
+-spec decoder(BufLen :: non_neg_integer(),
+              BlockSize :: pos_integer(),
+              StreamID :: non_neg_integer())-> {ok, Decoder :: reference()}.
 decoder(_BufLen, _BlockSize, _StreamID) ->
     not_loaded(?LINE).
 
--spec next_drop(Encoder :: reference()) -> drop() | undefined.
+-spec decoder_with_params(
+        BufLen :: non_neg_integer(),
+        BlockSize :: pos_integer(),
+        Epsilon :: float(),
+        Q :: pos_integer(),
+        StreamID :: non_neg_integer()) -> {ok, Decoder :: reference()}.
+decoder_with_params(_BufLen, _BlockSize, _Epsilon, _Q, _StreamID) ->
+    not_loaded(?LINE).
+
+-spec next_drop(Encoder :: reference()) -> {ok, drop()} | {error, undefined}.
 next_drop(_Encoder) ->
     not_loaded(?LINE).
 
--spec decode_drop(Drop :: drop(), Decoder :: reference()) -> Data :: binary() | undefined.
+-spec decode_drop(Drop :: drop(), Decoder :: reference()) -> {ok, Data :: binary()} |
+                                                             {error, incomplete}.
 decode_drop(_Drop, _Decoder) ->
     not_loaded(?LINE).
 
