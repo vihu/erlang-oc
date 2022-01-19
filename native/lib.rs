@@ -90,6 +90,12 @@ fn load(env: Env, _: Term) -> bool {
     true
 }
 
+fn unload(_env: Env) {}
+
+fn upgrade(_env: Env, _: Term) -> bool {
+    true
+}
+
 rustler::init!(
     "erlang_oc",
     [
@@ -100,5 +106,7 @@ rustler::init!(
         next_drop,
         decode_drop
     ],
-    load = load
+    load = Some(load),
+    upgrade = Some(upgrade),
+    unload = Some(unload)
 );
