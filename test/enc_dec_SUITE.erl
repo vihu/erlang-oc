@@ -122,5 +122,6 @@ run_long_running_test([Size | Tail], true) ->
         true ->
             ct:pal("Size: ~p Match!", [Size]),
             run_long_running_test(Tail, true);
-        false -> false
+        false ->
+            false
     end.

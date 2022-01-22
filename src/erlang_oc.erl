@@ -2,12 +2,15 @@
 
 %% API
 -export(
-   [encoder/3,
-    encoder_with_params/5,
-    decoder/3,
-    decoder_with_params/5,
-    next_drop/1,
-    decode_drop/2]).
+    [
+        encoder/3,
+        encoder_with_params/5,
+        decoder/3,
+        decoder_with_params/5,
+        next_drop/1,
+        decode_drop/2
+    ]
+).
 
 %% Native lib support
 -export([load/0]).
@@ -19,33 +22,39 @@
 %% Encoder
 %% ==================================================================
 
--spec encoder(Data :: binary(),
-              BlockSize :: pos_integer(),
-              StreamID :: non_neg_integer()) -> {ok, Encoder :: reference()}.
+-spec encoder(
+    Data :: binary(),
+    BlockSize :: pos_integer(),
+    StreamID :: non_neg_integer()
+) -> {ok, Encoder :: reference()}.
 encoder(_Data, _BlockSize, _StreamID) ->
     not_loaded(?LINE).
 
 -spec encoder_with_params(
-        Data :: binary(),
-        BlockSize :: pos_integer(),
-        Epsilon :: float(),
-        Q :: pos_integer(),
-        StreamID :: non_neg_integer()) -> {ok, Encoder :: reference()}.
+    Data :: binary(),
+    BlockSize :: pos_integer(),
+    Epsilon :: float(),
+    Q :: pos_integer(),
+    StreamID :: non_neg_integer()
+) -> {ok, Encoder :: reference()}.
 encoder_with_params(_Data, _BlockSize, _Epsilon, _Q, _StreamID) ->
     not_loaded(?LINE).
 
--spec decoder(BufLen :: non_neg_integer(),
-              BlockSize :: pos_integer(),
-              StreamID :: non_neg_integer())-> {ok, Decoder :: reference()}.
+-spec decoder(
+    BufLen :: non_neg_integer(),
+    BlockSize :: pos_integer(),
+    StreamID :: non_neg_integer()
+) -> {ok, Decoder :: reference()}.
 decoder(_BufLen, _BlockSize, _StreamID) ->
     not_loaded(?LINE).
 
 -spec decoder_with_params(
-        BufLen :: non_neg_integer(),
-        BlockSize :: pos_integer(),
-        Epsilon :: float(),
-        Q :: pos_integer(),
-        StreamID :: non_neg_integer()) -> {ok, Decoder :: reference()}.
+    BufLen :: non_neg_integer(),
+    BlockSize :: pos_integer(),
+    Epsilon :: float(),
+    Q :: pos_integer(),
+    StreamID :: non_neg_integer()
+) -> {ok, Decoder :: reference()}.
 decoder_with_params(_BufLen, _BlockSize, _Epsilon, _Q, _StreamID) ->
     not_loaded(?LINE).
 
@@ -53,8 +62,9 @@ decoder_with_params(_BufLen, _BlockSize, _Epsilon, _Q, _StreamID) ->
 next_drop(_Encoder) ->
     not_loaded(?LINE).
 
--spec decode_drop(Drop :: drop(), Decoder :: reference()) -> {ok, Data :: binary()} |
-                                                             {error, incomplete}.
+-spec decode_drop(Drop :: drop(), Decoder :: reference()) ->
+    {ok, Data :: binary()}
+    | {error, incomplete}.
 decode_drop(_Drop, _Decoder) ->
     not_loaded(?LINE).
 
@@ -68,7 +78,7 @@ load() ->
 not_loaded(Line) ->
     erlang:nif_error({error, {not_loaded, [{module, ?MODULE}, {line, Line}]}}).
 
-priv()->
+priv() ->
     case code:priv_dir(?MODULE) of
         {error, _} ->
             EbinDir = filename:dirname(code:which(?MODULE)),
